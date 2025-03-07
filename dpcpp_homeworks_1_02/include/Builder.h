@@ -1,6 +1,4 @@
-﻿#pragma once
-
-#include <iostream>
+﻿#include <iostream>
 #include "Query.h"
 
 
@@ -16,22 +14,30 @@ public:
 		return *this;
 	}
 
-	SqlSelectQueryBuilder& AddColumn(std::string columnName) noexcept
+	SqlSelectQueryBuilder& AddColumn(const std::vector<std::string>& columns) noexcept
 	{
-		if (query_.column.empty())
+		if (columns.empty())
 		{
-			query_.column = columnName;
+			query_.column += "*";
 		}
 		else
 		{
-			query_.column += ", " + columnName;
+			query_.column += columns[0];
+			for (int i = 1; i < columns.size(); ++i)
+			{
+				query_.column += ", " + columns[i];
+			}
+			query_.column += " ";
 		}
 		return *this;
 	}
 
-	SqlSelectQueryBuilder& AddWhere(const std::string& key, const std::string& value) noexcept
+	SqlSelectQueryBuilder& AddWhere(const std::map<std::string, std::string>& kv) noexcept
 	{
-		query_.where.emplace_back(std::make_pair(key, value));
+		for (auto [key, value] : kv)
+		{
+			query_.where.emplace_back(make_pair(key, value));
+		}
 		return *this;
 	}
 
@@ -46,7 +52,7 @@ public:
 			query_.sqlToSend = "\"SELECT " + query_.column;
 		}
 
-		query_.sqlToSend += " FROM " + query_.table;
+		query_.sqlToSend += "FROM " + query_.table;
 
 		if (!query_.where.empty())
 		{
