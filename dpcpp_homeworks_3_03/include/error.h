@@ -1,41 +1,40 @@
 ﻿#pragma once
 #include <iostream>
-
 #include "LogMessage.h"
+#include "LogHandler.h"
 
-class Error : public LogMessage
+
+
+class Error :public LogHandler
 {
 private:
+	LogHandler* next_;
 	std::string path_;
-	LogMessage* next_ = nullptr;
 public:
-	Error(const std::string_view& path): path_{ path } {}
+	Error(std::string& path) : path_{ path } {}
 
-	void type(Type t) const override
-	{
-		switch (t)
-		{
-		case Type::error:
-			std::cout << "processing of writing to a file..." << std::endl;
-			std::cout << "writing to a file '" << path_ << ": " << message();
-			break;
-		default:
-			if (next_ != nullptr)
-			{
-				next_->type(t);
-			}
-			break;
-		}
-	}
-
-	void set_next_handler(LogMessage* handler) override
+	
+	void setNext(LogHandler* handler) override
 	{
 		next_ = handler;
-	}
+	};
 
-	const std::string_view& message() const override
+	void receiveMessage(LogMessage* logMessage) override
 	{
-		std::string_view message = "It's error message!\n";
-		return message;
-	}
+		if (logMessage->type() == Type::error)
+		{
+
+			std::cout << "processing of writing to a file..." << std::endl;
+			std::cout << "Error! -> " << "writing to a file '" << path_ << "': " << logMessage->message() << std::endl;
+			std::cout << '\n';
+		}
+		else if (next_ != nullptr)
+		{
+			next_->receiveMessage(logMessage);
+		}
+		else
+		{
+			std::cout << "Unknown method" << std::endl;
+		}
+	};
 };

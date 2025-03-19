@@ -1,45 +1,34 @@
 ﻿#pragma once
-#include <exception>
 #include <iostream>
 
 #include "LogMessage.h"
+#include "LogHandler.h"
 
-class FatalError : public LogMessage
+class FatalError : public LogHandler
 {
 private:
-	LogMessage* next_ = nullptr;
+	LogHandler* next_;
 public:
-	void type(Type t) const override
-	{
-		switch (t)
-		{
-		case Type::fatalError:
-			std::cout << message();
-			break;
-		default:
-			if (next_ != nullptr)
-			{
-				next_->type(t);
-			}
-			break;
-		}
-	}
-
-	void set_next_handler(LogMessage* handler) override
+	void setNext(LogHandler* handler) override
 	{
 		next_ = handler;
 	}
 
-	const std::string_view& message() const override
+	void receiveMessage(LogMessage* logMessage) override
 	{
-		try
+		if (logMessage->type() == Type::fatalError)
 		{
-			throw std::runtime_error("It's fatal error message!\n");
+
+			std::cout << "Fatal error: " << logMessage->message() << std::endl;
+			throw std::runtime_error("FATAL_ERROR!");
 		}
-		catch (std::exception& ex) 
+		else if (next_ != nullptr)
 		{
-			std::cout << ex.what();
-			exit(1);
+			next_->receiveMessage(logMessage);
+		}
+		else
+		{
+			std::cout << "Unknown method" << std::endl;
 		}
 	}
 };

@@ -1,5 +1,7 @@
 ﻿#include <iostream>
+#include <vector>
 
+#include "./include/LogHandler.h"
 #include "./include/LogMessage.h"
 #include "./include/error.h"
 #include "./include/warning.h"
@@ -7,26 +9,33 @@
 #include "./include/unknownMessage.h"
 
 
-using namespace std;
-
 int main()
 {
-	Type typeMessage;
-	LogMessage* warnings = new Warning();
-	LogMessage* errors = new Error("c:\\temp");
-	LogMessage* fatalError = new FatalError();
-	LogMessage* unknownMessage = new UnknownMessage();
+	std::string path = "c:\\temp";
+	LogHandler* errors = new Error(path);
+	LogHandler* warnings = new Warning();
+	LogHandler* fatalError = new FatalError();
+	LogHandler* unknownMessage = new UnknownMessage();
+	warnings->setNext(errors);
+	errors->setNext(unknownMessage);
+	unknownMessage->setNext(fatalError);
 
-	warnings->set_next_handler(errors);
-	errors->set_next_handler(unknownMessage);
-	unknownMessage->set_next_handler(fatalError);
+	LogMessage wlm(Type::warning, "Warning message");
+	LogMessage elm(Type::error, "Error message");
+	LogMessage felm(Type::fatalError, "Fatal error!");
+	LogMessage umlm(Type::unknownMessage, "Unknow error message");
 
-	warnings->type(Type::warning);
-	warnings->type(Type::error);
-	warnings->type(Type::unknownMessage);
-	warnings->type(Type::fatalError);
-	
+	std::vector<LogMessage> LM = { wlm, elm, umlm, felm };
 
-	cout << "Hello CMake." << endl;
+	for (auto lm : LM) {
+		try
+		{
+			warnings->receiveMessage(&lm);
+		}
+		catch (std::exception& e)
+		{
+			std::cout << e.what() << std::endl;
+		}
+	}
 	return 0;
 }

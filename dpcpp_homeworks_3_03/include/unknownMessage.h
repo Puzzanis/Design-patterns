@@ -2,43 +2,31 @@
 #include <iostream>
 
 #include "LogMessage.h"
+#include "LogHandler.h"
 
-class UnknownMessage : public LogMessage
+class UnknownMessage : public LogHandler
 {
 private:
-	LogMessage* next_ = nullptr;
+	LogHandler* next_;
 public:
-	void type(Type t) const override
-	{
-		switch (t)
-		{
-		case Type::unknownMessage:
-			std::cout << message();
-			break;
-		default:
-			if (next_ != nullptr)
-			{
-				next_->type(t);
-			}
-			break;
-		}
-	}
-
-	void set_next_handler(LogMessage* handler) override
+	void setNext(LogHandler* handler) override
 	{
 		next_ = handler;
 	}
 
-	const std::string_view& message() const override
+	void receiveMessage(LogMessage* logMessage) override
 	{
-		std::string_view message = "It's unknown message!\n";
-		try
+		if (logMessage->type() == Type::unknownMessage)
 		{
-			throw (message);
+			throw std::runtime_error("UNKNOW_ERROR: Message isn't handled\n");
 		}
-		catch (...)
+		else if (next_ != nullptr)
 		{
-			return message;
+			next_->receiveMessage(logMessage);
+		}
+		else
+		{
+			std::cout << "Unknown method" << std::endl;
 		}
 	}
 };
